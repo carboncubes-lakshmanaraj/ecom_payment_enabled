@@ -23,32 +23,41 @@ class DBManager {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2, // ⬅ bumped version
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: (db, version) async {
         await db.execute('''
-          CREATE TABLE IF NOT EXISTS Orders (
-            OrderID INTEGER PRIMARY KEY AUTOINCREMENT,
-            Email TEXT NOT NULL,
-            OrderDate TEXT NOT NULL DEFAULT (datetime('now')),
-            TotalPrice REAL NOT NULL
-          )
-        ''');
+        CREATE TABLE IF NOT EXISTS Orders (
+          OrderID INTEGER PRIMARY KEY AUTOINCREMENT,
+          Email TEXT NOT NULL,
+          OrderDate TEXT NOT NULL DEFAULT (datetime('now')),
+          TotalPrice REAL NOT NULL,
+          OrderStatus TEXT NOT NULL DEFAULT 'Pending'  -- ✅ added
+        )
+      ''');
 
         await db.execute('''
-          CREATE TABLE IF NOT EXISTS OrderItems (
-            OrderItemID INTEGER PRIMARY KEY AUTOINCREMENT,
-            OrderID INTEGER NOT NULL,
-            ProductTitle TEXT NOT NULL,
-            ProductImage TEXT,
-            SelectedSize TEXT,
-            Quantity INTEGER NOT NULL DEFAULT 1,
-            Price REAL NOT NULL,
-            FOREIGN KEY (OrderID) REFERENCES Orders(OrderID) ON DELETE CASCADE
-          )
-        ''');
+        CREATE TABLE IF NOT EXISTS OrderItems (
+          OrderItemID INTEGER PRIMARY KEY AUTOINCREMENT,
+          OrderID INTEGER NOT NULL,
+          ProductTitle TEXT NOT NULL,
+          ProductImage TEXT,
+          SelectedSize TEXT,
+          Quantity INTEGER NOT NULL DEFAULT 1,
+          Price REAL NOT NULL,
+          FOREIGN KEY (OrderID) REFERENCES Orders(OrderID) ON DELETE CASCADE
+        )
+      ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          // ✅ Add OrderStatus column on upgrade
+          await db.execute(
+            "ALTER TABLE Orders ADD COLUMN OrderStatus TEXT DEFAULT 'Pending'",
+          );
+        }
       },
     );
   }

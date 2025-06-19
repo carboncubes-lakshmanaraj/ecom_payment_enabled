@@ -1,5 +1,7 @@
+import 'package:ecom_payment/stripekeys/keys.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_stripe/flutter_stripe.dart'; // ✅ Add this line
 
 import 'package:ecom_payment/cartprovider/cart_provider.dart';
 import 'package:ecom_payment/screens/spalshscreen.dart';
@@ -8,7 +10,11 @@ import 'package:ecom_payment/dbmanager/db.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize SQLite database
+  // ✅ Initialize Stripe with your publishable key
+  Stripe.publishableKey = publishableKey; // <-- Replace with your key
+  await Stripe.instance.applySettings();
+
+  // ✅ Initialize your SQLite DB
   await DBManager.database;
 
   runApp(ChangeNotifierProvider(create: (_) => CartProvider(), child: MyApp()));
