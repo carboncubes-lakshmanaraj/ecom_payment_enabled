@@ -1,5 +1,5 @@
 import 'package:ecom_payment/repositories/order_repository.dart';
-import 'package:ecom_payment/screens/ordersummary_page.dart';
+import 'package:ecom_payment/screens/ordersummary_page_for%20payment.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ecom_payment/datas/cartitem.dart';
@@ -45,7 +45,7 @@ class CartPage extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '₹${cartProvider.grandTotal.toStringAsFixed(0)}',
+                        '₹${cartProvider.grandTotal.toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -168,7 +168,7 @@ class CartItemTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Size: ${cartItem.selectedSize}'),
-          Text('₹${cartItem.product.discountedPrice.toStringAsFixed(0)}'),
+          Text('₹${cartItem.product.discountedPrice.toStringAsFixed(2)}'),
         ],
       ),
       trailing: IconButton(

@@ -1,5 +1,6 @@
 import 'package:ecom_payment/screens/cartpage.dart';
 import 'package:ecom_payment/screens/home.dart';
+import 'package:ecom_payment/screens/orders_table_full%20_history_viewpage.dart';
 import 'package:ecom_payment/screens/wishlist.dart';
 import 'package:flutter/material.dart';
 
@@ -24,7 +25,7 @@ class _HomepageState extends State<Homepage> {
     WishList(),
     CartPage(),
     Center(child: Text("Search")),
-    Center(child: Text("Setting")),
+    OrdersDebugPage(),
   ];
 
   @override

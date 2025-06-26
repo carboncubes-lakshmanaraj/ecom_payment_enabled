@@ -11,24 +11,25 @@ class OrderRepository {
 
     double total = cartItems.fold(
       0,
-      (sum, item) => sum + item.product.discountedPrice * 1, // no rounding here
+      (sum, item) => sum + item.product.discountedPrice * 1,
     );
 
     // Insert into Orders table
     int orderId = await db.insert("Orders", {
       'Email': email,
       'TotalPrice': total,
-      'OrderStatus': 'Pending', // set status explicitly
+      'OrderStatus': 'Pending',
+      'PaymentIntentID': null, // initialize as null
     });
 
-    // Insert items into OrderItems table
+    // Insert order items
     for (var item in cartItems) {
       await db.insert("OrderItems", {
         'OrderID': orderId,
         'ProductTitle': item.product.title,
         'ProductImage': item.product.productImage,
         'SelectedSize': item.selectedSize,
-        'Quantity': 1, // Update to item.quantity if you support quantity
+        'Quantity': 1,
         'Price': item.product.discountedPrice,
       });
     }
@@ -71,7 +72,37 @@ class OrderRepository {
     );
   }
 
-  /// (Optional) Fetch all orders by status
+  /// Save Stripe PaymentIntent ID (used for idempotency)
+  static Future<void> savePaymentIntentId(int orderId, String intentId) async {
+    final db = await DBManager.database;
+
+    await db.update(
+      'Orders',
+      {'PaymentIntentID': intentId},
+      where: 'OrderID = ?',
+      whereArgs: [orderId],
+    );
+  }
+
+  /// Retrieve saved Stripe PaymentIntent ID (if any)
+  static Future<String?> getPaymentIntentId(int orderId) async {
+    final db = await DBManager.database;
+
+    final result = await db.query(
+      'Orders',
+      columns: ['PaymentIntentID'],
+      where: 'OrderID = ?',
+      whereArgs: [orderId],
+    );
+
+    if (result.isNotEmpty && result.first['PaymentIntentID'] != null) {
+      return result.first['PaymentIntentID'] as String;
+    }
+
+    return null;
+  }
+
+  /// Optional: Fetch all orders by status
   static Future<List<Map<String, dynamic>>> getOrdersByStatus(
     String status,
   ) async {

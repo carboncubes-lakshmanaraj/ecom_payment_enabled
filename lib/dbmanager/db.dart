@@ -23,7 +23,7 @@ class DBManager {
 
     return await openDatabase(
       path,
-      version: 2, // ⬅ bumped version
+      version: 4, // 🔼 updated
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -34,7 +34,8 @@ class DBManager {
           Email TEXT NOT NULL,
           OrderDate TEXT NOT NULL DEFAULT (datetime('now')),
           TotalPrice REAL NOT NULL,
-          OrderStatus TEXT NOT NULL DEFAULT 'Pending'  -- ✅ added
+          OrderStatus TEXT NOT NULL DEFAULT 'Pending',
+          PaymentIntentID TEXT  -- ✅ added
         )
       ''');
 
@@ -50,13 +51,40 @@ class DBManager {
           FOREIGN KEY (OrderID) REFERENCES Orders(OrderID) ON DELETE CASCADE
         )
       ''');
+        await db.execute('''
+  CREATE TABLE IF NOT EXISTS payment_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER,
+    direction TEXT,                    
+    payload TEXT,
+    created_at TEXT,
+    FOREIGN KEY (order_id) REFERENCES Orders(OrderID) ON DELETE CASCADE
+  )
+''');
+        //direction sending or reciveing
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
-          // ✅ Add OrderStatus column on upgrade
           await db.execute(
             "ALTER TABLE Orders ADD COLUMN OrderStatus TEXT DEFAULT 'Pending'",
           );
+        }
+        if (oldVersion < 3) {
+          await db.execute(
+            "ALTER TABLE Orders ADD COLUMN PaymentIntentID TEXT",
+          );
+        }
+        if (oldVersion < 4) {
+          await db.execute('''
+      CREATE TABLE IF NOT EXISTS payment_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_id INTEGER,
+        direction TEXT,
+        payload TEXT,
+        created_at TEXT,
+        FOREIGN KEY (order_id) REFERENCES Orders(OrderID) ON DELETE CASCADE
+      )
+    ''');
         }
       },
     );
