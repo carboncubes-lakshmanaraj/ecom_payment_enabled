@@ -1,0 +1,65 @@
+{
+    "dummyProducts": [
+        {
+            "title": "Women Printed Kurta",
+            "moreinfo": "In the 11th century, women in Europe wore loose garments that were similar in shape to the tunics worn by men.[7] Sleeves varied in fit and length, and hemlines fell below the knees, most often reaching the ankle or ground.[7] These dresses were worn over ankle-length chemise garments.[7] As the century progressed, these dresses featured a tighter fit on the arms and upper body.[7] The tighter fit was achieved by making slits to the waist and in the sleeves that were laced closed to fit the figure.[8] Laces were gradually replaced by buttons.[8] By the end of the 11th century, sleeves widened with cuffs sometimes reaching several feet in circumference.[8] This style remained popular into the 13th century, although the sleeves once again became more fitted.[8]\n\nIn the 13th and 14th centuries, a similar dress known as a cote-hardie came into fashion.[9][10] This garment was closed down the front of the bodice with buttons that extended to the hip; this resulted in a dress that was more fitted through the hip rather than just to the waist.[9] These dresses also often featured decorative elements such as long strips of cloth around the elbow known as tippets.[9]\n\nIn the 15th century, houppelandes and gowns became popular. Houppelandes were full-cut, floor-length dresses with high collars and full sleeves.[11] Gowns were also long dresses, but they had open necklines, a closer-fitted bodice, and sleeves that became more fitted as the century progressed.[12] Both houppelandes and gowns were often belted just below the bust.[12]",
+            "productDescrip": " Neque porro quisquam est qui dolorem ipsum quia",
+            "mrpPrice": 2499,
+            "percentageOff": 40,
+            "categoryIds": [
+                1,
+                2
+            ],
+            "subCategoryId": 2,
+            "dealsOfTheDay": true,
+            "trendingProducts": false,
+            "additionalImages": [
+                "assets/procars/kurta/one.jpg",
+                "assets/procars/kurta/two.jpg",
+                "assets/procars/kurta/three.jpg",
+                "assets/procars/kurta/four.jpg"
+            ],
+            "productImage": "assets/products/kurtha.png"
+        },
+        {
+            "title": "HRX by Hrithik Roshan",
+            "moreinfo": "Earliest evidence\nThe earliest known shoes are sagebrush bark sandals dating from approximately 7000 or 8000 BC, found in the Fort Rock Cave in the US state of Oregon in 1938.[5] The world's oldest leather shoe, made from a single piece of cowhide laced with a leather cord along seams at the front and back, was found in the Areni-1 cave complex in Armenia in 2008 and is believed to date to 3500 BC.[6][7] Ötzi the Iceman's shoes, dating to 3300 BC, featured brown bearskin bases, deerskin side panels, and a bark-string net, which pulled tight around the foot.[6] The Jotunheimen shoe was discovered in August 2006: archaeologists estimate that this leather shoe was made between 1800 and 1100 BC,[8][9] making it the oldest article of clothing discovered in Scandinavia. Sandals and other plant fiber based tools were found in Cueva de los Murciélagos in Albuñol in southern Spain in 2023, dating to approximately 7500 to 4200 BC, making them what are believed to be the oldest shoes found in Europe.[10]\n\nIt is thought that shoes may have been used long before this, but because the materials used were highly perishable, it is difficult to find evidence of the earliest footwear.[11]\n\nFootprints suggestive of shoes or sandals due to having crisp edges, no signs of toes found and three small divots where leather tying laces/straps would have been attached have been at Garden Route National Park, Addo Elephant National Park and Goukamma Nature Reserve in South Africa.[12] These date back to between 73,000 and 136,000 BP. Consistent with the existence of such shoe is the finding of bone awls dating back to this period that could have made simple footwear.[12]",
+            "productDescrip": "Neque porro quisquam est qui dolorem ipsum quia",
+            "mrpPrice": 4999,
+            "percentageOff": 50,
+            "subCategoryId": 1,
+            "categoryIds": [
+                3
+            ],
+            "dealsOfTheDay": true,
+            "trendingProducts": false,
+            "additionalImages": [
+                "assets/procars/shoe/one.jpg",
+                "assets/procars/shoe/two.jpg",
+                "assets/procars/shoe/three.jpg",
+                "assets/procars/shoe/four.jpg"
+            ],
+            "productImage": "assets/products/nike shoe.png"
+        },
+        {
+            "title": "IWC Schaffhausen",
+            "moreinfo": "A watch is a timepiece carried or worn by a person. It is designed to keep a consistent movement despite the motions caused by the person's activities. A wristwatch is designed to be worn around the wrist, attached by a watch strap or other type of bracelet, including metal bands or leather straps. A pocket watch is carried in a pocket, often attached to a chain. A stopwatch is a watch that measures intervals of time.\n\nDuring most of their history, beginning in the 16th century, watches were mechanical devices, driven by clockwork, powered by winding a mainspring, and keeping time with an oscillating balance wheel. These are called mechanical watches.[1][2] In the 1960s the electronic quartz watch was invented, powered by a battery and keeping time with a vibrating quartz crystal. By the 1980s it took over most of the watch market, in what was called the quartz revolution (or the quartz crisis in Switzerland, whose renowned watch industry it decimated).[3][4] In the 2010s, smartwatches emerged, small wrist-worn computers with touchscreens, with functions that go far beyond timekeeping.\n\nModern watches often display the day, date, month, and year. Mechanical watches may have extra features (\"complications\") such as moon-phase displays and different types of tourbillon. Quartz watches often include timers, chronographs, and alarm functions. Smartwatches and more complicated electronic watches may even incorporate calculators, GPS[5] and Bluetooth technology or have heart-rate monitoring capabilities, and some use radio clock technology to regularly correct the time.\n\nMost watches used mainly for timekeeping have quartz movements. But expensive collectible watches, valued more for their elaborate craftsmanship, aesthetic appeal, and glamorous design than for timekeeping, often have traditional mechanical movements, despite being less accurate and more expensive than their electronic counterparts.[3][4][6] As of 2019, the most expensive watch ever sold at auction was the Patek Philippe Grandmaster Chime for US31.2 million.[7]",
+            "productDescrip": "2021 Pilot's Watch 'SIHH 2019' 44mm",
+            "mrpPrice": 1599,
+            "subCategoryId": 4,
+            "percentageOff": 60,
+            "categoryIds": [
+                2
+            ],
+            "dealsOfTheDay": true,
+            "trendingProducts": true,
+            "additionalImages": [
+                "assets/procars/watches/one.jpg",
+                "assets/procars/watches/two.jpg",
+                "assets/procars/watches/three.jpg",
+                "assets/procars/watches/four.jpg"
+            ],
+            "productImage": "assets/products/watch.png"
+        }
+    ]
+}

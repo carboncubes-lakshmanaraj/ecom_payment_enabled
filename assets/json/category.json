@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "title": "Beauty",
+    "image": "assets/cate/beauty.png"
+  },
+  {
+    "id": 2,
+    "title": "Fashion",
+    "image": "assets/cate/fashion.png"
+  },
+  {
+    "id": 3,
+    "title": "Kids",
+    "image": "assets/cate/kids.png"
+  },
+  {
+    "id": 4,
+    "title": "Mens",
+    "image": "assets/cate/men.png"
+  },
+  {
+    "id": 5,
+    "title": "Womens",
+    "image": "assets/cate/women.png"
+  }
+]

@@ -47,6 +47,7 @@ dependencies:
   sqlite_viewer: ^1.0.5
   flutter_stripe: ^11.5.0
   csv: ^6.0.0
+  share_plus: ^11.0.0
 
 dev_dependencies:
   flutter_test:
@@ -133,6 +134,9 @@ flutter:
     - assets/appicon.png
     - assets/icons/stripe.png
     - assets/icons/paytm.png
+    - assets/json/category.json
+    - assets/json/subcat.json
+    - assets/json/product.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

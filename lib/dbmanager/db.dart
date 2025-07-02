@@ -13,9 +13,8 @@ class DBManager {
   }
 
   static Future<String> getDatabasePath() async {
-    Directory dir =
-        await getApplicationDocumentsDirectory(); // safer & permission-free
-    return join(dir.path, "ecom.db");
+    Directory? extDir = await getExternalStorageDirectory();
+    return join(extDir!.path, "ecom.db");
   }
 
   static Future<Database> _initDB() async {
@@ -23,11 +22,12 @@ class DBManager {
 
     return await openDatabase(
       path,
-      version: 4, // 🔼 updated
+      version: 5, // 🔼 bump version for new tables
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: (db, version) async {
+        // Existing tables
         await db.execute('''
         CREATE TABLE IF NOT EXISTS Orders (
           OrderID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,7 +35,7 @@ class DBManager {
           OrderDate TEXT NOT NULL DEFAULT (datetime('now')),
           TotalPrice REAL NOT NULL,
           OrderStatus TEXT NOT NULL DEFAULT 'Pending',
-          PaymentIntentID TEXT  -- ✅ added
+          PaymentIntentID TEXT
         )
       ''');
 
@@ -51,17 +51,69 @@ class DBManager {
           FOREIGN KEY (OrderID) REFERENCES Orders(OrderID) ON DELETE CASCADE
         )
       ''');
+
         await db.execute('''
-  CREATE TABLE IF NOT EXISTS payment_logs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    order_id INTEGER,
-    direction TEXT,                    
-    payload TEXT,
-    created_at TEXT,
-    FOREIGN KEY (order_id) REFERENCES Orders(OrderID) ON DELETE CASCADE
-  )
-''');
-        //direction sending or reciveing
+        CREATE TABLE IF NOT EXISTS payment_logs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          order_id INTEGER,
+          direction TEXT,
+          payload TEXT,
+          created_at TEXT,
+          FOREIGN KEY (order_id) REFERENCES Orders(OrderID) ON DELETE CASCADE
+        )
+      ''');
+
+        // 🔥 NEW: Product-related tables
+
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS categories (
+            id INTEGER PRIMARY KEY ,
+            title TEXT,
+            image TEXT
+          );
+        ''');
+
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS sub_categories (
+            id INTEGER PRIMARY KEY  ,
+            title TEXT
+          );
+        ''');
+
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT,
+            productDescrip TEXT,
+            moreinfo TEXT,
+            mrpPrice REAL,
+            percentageOff INTEGER,
+            subCategoryId INTEGER,
+            dealsOfTheDay INTEGER,
+            trendingProducts INTEGER,
+            productImage TEXT,
+            FOREIGN KEY (subCategoryId) REFERENCES sub_categories(id)
+          );
+        ''');
+
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS product_categories (
+            productId INTEGER,
+            categoryId INTEGER,
+            PRIMARY KEY (productId, categoryId),
+            FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE,
+            FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE CASCADE
+          );
+        ''');
+
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS product_images (
+            productId INTEGER,
+            imagePath TEXT,
+            PRIMARY KEY (productId, imagePath),
+            FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE
+          );
+        ''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -76,15 +128,66 @@ class DBManager {
         }
         if (oldVersion < 4) {
           await db.execute('''
-      CREATE TABLE IF NOT EXISTS payment_logs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        order_id INTEGER,
-        direction TEXT,
-        payload TEXT,
-        created_at TEXT,
-        FOREIGN KEY (order_id) REFERENCES Orders(OrderID) ON DELETE CASCADE
-      )
-    ''');
+            CREATE TABLE IF NOT EXISTS payment_logs (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              order_id INTEGER,
+              direction TEXT,
+              payload TEXT,
+              created_at TEXT,
+              FOREIGN KEY (order_id) REFERENCES Orders(OrderID) ON DELETE CASCADE
+            )
+          ''');
+        }
+        if (oldVersion < 5) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS categories (
+              id INTEGER PRIMARY KEY ,
+              title TEXT,
+              image TEXT
+            );
+          ''');
+
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS sub_categories (
+              id INTEGER PRIMARY KEY ,
+              title TEXT
+            );
+          ''');
+
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS products (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              title TEXT,
+              productDescrip TEXT,
+              moreinfo TEXT,
+              mrpPrice REAL,
+              percentageOff INTEGER,
+              subCategoryId INTEGER,
+              dealsOfTheDay INTEGER,
+              trendingProducts INTEGER,
+              productImage TEXT,
+              FOREIGN KEY (subCategoryId) REFERENCES sub_categories(id)
+            );
+          ''');
+
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS product_categories (
+              productId INTEGER,
+              categoryId INTEGER,
+              PRIMARY KEY (productId, categoryId),
+              FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE,
+              FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE CASCADE
+            );
+          ''');
+
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS product_images (
+              productId INTEGER,
+              imagePath TEXT,
+              PRIMARY KEY (productId, imagePath),
+              FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE
+            );
+          ''');
         }
       },
     );

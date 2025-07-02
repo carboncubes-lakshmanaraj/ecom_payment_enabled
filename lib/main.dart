@@ -1,3 +1,6 @@
+import 'package:ecom_payment/jsonloader/categories.dart';
+import 'package:ecom_payment/jsonloader/productloader.dart';
+import 'package:ecom_payment/jsonloader/subcategories.dart';
 import 'package:ecom_payment/stripekeys/keys.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -16,7 +19,9 @@ void main() async {
 
   // ✅ Initialize your SQLite DB
   await DBManager.database;
-
+  await loadCategoriesFromJson();
+  await loadsubCategoriesFromJson();
+  await loadProductsFromJson();
   runApp(ChangeNotifierProvider(create: (_) => CartProvider(), child: MyApp()));
 }
 
