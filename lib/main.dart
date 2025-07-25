@@ -1,3 +1,4 @@
+import 'package:ecom_payment/currencyprovider/currency_provider.dart';
 import 'package:ecom_payment/jsonloader/categories.dart';
 import 'package:ecom_payment/jsonloader/productloader.dart';
 import 'package:ecom_payment/jsonloader/subcategories.dart';
@@ -22,7 +23,15 @@ void main() async {
   await loadCategoriesFromJson();
   await loadsubCategoriesFromJson();
   await loadProductsFromJson();
-  runApp(ChangeNotifierProvider(create: (_) => CartProvider(), child: MyApp()));
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => CurrencyProvider()),
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

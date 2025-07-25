@@ -1,11 +1,18 @@
-import 'package:ecom_payment/screens/productdetailpage.dart';
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
-import 'package:ecom_payment/datas/product.dart'; // Make sure this import is correct
+
+import 'package:ecom_payment/datas/product.dart';
+import 'package:ecom_payment/screens/productdetailpage.dart';
 
 class HorizontalListWithButtons extends StatefulWidget {
   final List<Product> products;
+  final String? selectedCurrency;
 
-  HorizontalListWithButtons({required this.products});
+  HorizontalListWithButtons({
+    Key? key,
+    required this.products,
+    required this.selectedCurrency,
+  }) : super(key: key);
 
   @override
   _HorizontalListWithButtonsState createState() =>
@@ -18,13 +25,20 @@ class _HorizontalListWithButtonsState extends State<HorizontalListWithButtons> {
   bool _canScrollLeft = false;
   bool _canScrollRight = true;
 
-  late List<Product> dealsOfTheDay;
-
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_updateScrollButtonVisibility);
-    dealsOfTheDay = widget.products.where((p) => p.dealsOfTheDay).toList();
+  }
+
+  @override
+  void didUpdateWidget(covariant HorizontalListWithButtons oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedCurrency != widget.selectedCurrency) {
+      setState(() {
+        // force rebuild to reflect currency change
+      });
+    }
   }
 
   void _updateScrollButtonVisibility() {
@@ -59,14 +73,42 @@ class _HorizontalListWithButtonsState extends State<HorizontalListWithButtons> {
     );
   }
 
+  String getCurrencySymbol(String? currencyId) {
+    switch (currencyId) {
+      case "INR":
+        return "₹";
+      case "USD":
+        return "\$";
+      case "GBP":
+        return "£";
+      default:
+        return "";
+    }
+  }
+
   Widget _buildProductItem(Product product) {
+    final currencyId = widget.selectedCurrency ?? "INR";
+    final currencySymbol = getCurrencySymbol(currencyId);
+
+    // Try to get price from selected currency
+    double priceToUse = product.mrpPrice;
+    final currencyPrice = product.priceFor(currencyId);
+
+    if (currencyPrice != null) {
+      priceToUse = currencyPrice;
+    }
+
+    final discountedPrice = priceToUse * (1 - (product.percentageOff / 100));
+
     return GestureDetector(
-      //capture click and pass data .
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => ProductDetailsPage(product: product),
+            builder: (_) => ProductDetailsPage(
+              product: product,
+              selectedCurrency: widget.selectedCurrency,
+            ),
           ),
         );
       },
@@ -82,10 +124,11 @@ class _HorizontalListWithButtonsState extends State<HorizontalListWithButtons> {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-
           children: [
             Image.asset(
-              product.productImage,
+              product.productImage.isNotEmpty
+                  ? product.productImage
+                  : "assets/placeholder.png",
               height: 130,
               width: 200,
               fit: BoxFit.fill,
@@ -103,7 +146,7 @@ class _HorizontalListWithButtonsState extends State<HorizontalListWithButtons> {
             Row(
               children: [
                 Text(
-                  "₹${product.discountedPrice.toStringAsFixed(0)}",
+                  "$currencySymbol${discountedPrice.toStringAsFixed(2)}",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Colors.green,
@@ -111,7 +154,7 @@ class _HorizontalListWithButtonsState extends State<HorizontalListWithButtons> {
                 ),
                 SizedBox(width: 6),
                 Text(
-                  "₹${product.mrpPrice.toStringAsFixed(0)}",
+                  "$currencySymbol${priceToUse.toStringAsFixed(2)}",
                   style: TextStyle(
                     decoration: TextDecoration.lineThrough,
                     color: Colors.grey,
@@ -132,7 +175,7 @@ class _HorizontalListWithButtonsState extends State<HorizontalListWithButtons> {
                   Icons.star,
                   size: 16,
                   color: index < 4 ? Colors.orange : Colors.grey[300],
-                ); // dummy 4-star
+                );
               }),
             ),
           ],
@@ -150,6 +193,17 @@ class _HorizontalListWithButtonsState extends State<HorizontalListWithButtons> {
 
   @override
   Widget build(BuildContext context) {
+    final dealsOfTheDay = widget.products
+        .where((p) => p.dealsOfTheDay)
+        .toList();
+
+    if (dealsOfTheDay.isEmpty) {
+      return SizedBox(
+        height: 200,
+        child: Center(child: Text("No deals of the day available.")),
+      );
+    }
+
     return Stack(
       children: [
         Positioned.fill(
@@ -165,7 +219,7 @@ class _HorizontalListWithButtonsState extends State<HorizontalListWithButtons> {
           Align(
             alignment: Alignment.centerLeft,
             child: FloatingActionButton.small(
-              heroTag: 'back_dealoftheday',
+              heroTag: 'back_dealoftheday_${hashCode}',
               onPressed: _scrollLeft,
               child: Icon(Icons.arrow_back),
               tooltip: 'Scroll Left',
@@ -175,7 +229,7 @@ class _HorizontalListWithButtonsState extends State<HorizontalListWithButtons> {
           Align(
             alignment: Alignment.centerRight,
             child: FloatingActionButton.small(
-              heroTag: 'front_dealoftheday',
+              heroTag: 'front_dealoftheday_${hashCode}',
               onPressed: _scrollRight,
               child: Icon(Icons.arrow_forward),
               tooltip: 'Scroll Right',

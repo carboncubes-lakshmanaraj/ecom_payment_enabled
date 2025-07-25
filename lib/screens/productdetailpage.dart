@@ -1,3 +1,5 @@
+import 'package:ecom_payment/alertdialog/dialkogbox_instead_of_scaffold.dart';
+import 'package:ecom_payment/alertdialog/dialog_box_time.dart';
 import 'package:ecom_payment/cartprovider/cart_provider.dart';
 import 'package:ecom_payment/datas/cartitem.dart';
 import 'package:ecom_payment/datas/categoryandsubcat.dart';
@@ -17,8 +19,13 @@ import 'package:ecom_payment/widgetsfordescription/similarproductlist.dart';
 
 class ProductDetailsPage extends StatefulWidget {
   final Product product;
+  final String? selectedCurrency;
 
-  const ProductDetailsPage({super.key, required this.product});
+  const ProductDetailsPage({
+    super.key,
+    required this.product,
+    required this.selectedCurrency,
+  });
 
   @override
   State<ProductDetailsPage> createState() => _ProductDetailsPageState();
@@ -26,6 +33,19 @@ class ProductDetailsPage extends StatefulWidget {
 
 class _ProductDetailsPageState extends State<ProductDetailsPage> {
   String? _selectedSize;
+
+  String getCurrencySymbol(String? currencyId) {
+    switch (currencyId) {
+      case "INR":
+        return "₹";
+      case "USD":
+        return "\$";
+      case "GBP":
+        return "£";
+      default:
+        return "";
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +55,18 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
       (sc) => sc.id == product.subCategoryId,
       orElse: () => SubCategory(id: 0, title: ''),
     );
+
+    final currencyId = widget.selectedCurrency ?? "INR";
+    final currencySymbol = getCurrencySymbol(currencyId);
+
+    double priceToUse = widget.product.mrpPrice;
+    final currencyPrice = widget.product.priceFor(currencyId);
+    if (currencyPrice != null) {
+      priceToUse = currencyPrice;
+    }
+
+    final discountedPrice =
+        priceToUse * (1 - (widget.product.percentageOff / 100));
 
     return Scaffold(
       appBar: AppBar(
@@ -60,45 +92,29 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                   ScaffoldMessenger.of(context).clearSnackBars();
 
                   if (alreadyInCart) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        behavior: SnackBarBehavior.floating,
-                        margin: const EdgeInsets.only(
-                          bottom: 80,
-                          left: 20,
-                          right: 20,
-                        ),
-                        content: Text('Product already exists in cart!'),
-                      ),
+                    showThumbsUpDialog(
+                      context,
+                      'Product already exists in cart!',
+                      isSuccess: false,
                     );
                   } else {
                     cartProvider.addToCart(
                       CartItem(product: product, selectedSize: sSize),
                     );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        behavior: SnackBarBehavior.floating,
-                        margin: const EdgeInsets.only(
-                          bottom: 80,
-                          left: 20,
-                          right: 20,
-                        ),
-                        content: Text('Product added successfully!'),
-                      ),
+
+                    showThumbsUpDialog(
+                      context,
+                      'Product added successfully',
+                      isSuccess: true,
                     );
                   }
                 } else {
                   ScaffoldMessenger.of(context).clearSnackBars();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      behavior: SnackBarBehavior.floating,
-                      margin: const EdgeInsets.only(
-                        bottom: 80,
-                        left: 20,
-                        right: 20,
-                      ),
-                      content: Text('Please select size'),
-                    ),
+
+                  showThumbsUpDialog(
+                    context,
+                    'Please select size',
+                    isSuccess: false,
                   );
                 }
               },
@@ -143,12 +159,12 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               Row(
                 children: [
                   Text(
-                    "₹${product.discountedPrice.toStringAsFixed(0)}",
+                    "$currencySymbol${discountedPrice.toStringAsFixed(2)}",
                     style: TextStyle(fontSize: 18, color: Colors.green),
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    "₹${product.mrpPrice.toStringAsFixed(0)}",
+                    "$currencySymbol${priceToUse.toStringAsFixed(2)}",
                     style: TextStyle(
                       decoration: TextDecoration.lineThrough,
                       color: Colors.grey,
@@ -165,19 +181,19 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               const SizedBox(height: 16),
               NearestRefundpolicyVip(),
               ButtonBuynowGotoCart(
-                size:
-                    _selectedSize ??
-                    '', // or pass directly from SizeChartWidget
+                size: _selectedSize ?? '',
+                selectedCurrency: widget
+                    .selectedCurrency, // or pass directly from SizeChartWidget
                 product: product,
               ),
               Deliverywithin(),
-              Container(
-                height: 330,
-                child: SimilarProductsHorizontalList(
-                  currentProduct: product,
-                  allProducts: dummyProducts,
-                ),
-              ),
+              // Container(
+              //   height: 330,
+              //   child: SimilarProductsHorizontalList(
+              //     currentProduct: product,
+              //     allProducts: dummyProducts,
+              //   ),
+              // ),
             ],
           ),
         ),

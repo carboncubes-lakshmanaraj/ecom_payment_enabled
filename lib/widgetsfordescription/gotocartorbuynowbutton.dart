@@ -1,4 +1,5 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'package:ecom_payment/alertdialog/dialog_box_time.dart';
 import 'package:ecom_payment/datas/cartitem.dart';
 import 'package:ecom_payment/datas/product.dart';
 import 'package:ecom_payment/screens/cartpage.dart';
@@ -11,11 +12,12 @@ import 'package:ecom_payment/screens/checkoutform.dart';
 class ButtonBuynowGotoCart extends StatelessWidget {
   final Product product;
   final String size;
-
+  final String? selectedCurrency;
   const ButtonBuynowGotoCart({
     Key? key,
     required this.product,
     required this.size,
+    required this.selectedCurrency,
   }) : super(key: key);
 
   void _onPress(BuildContext context) {
@@ -190,16 +192,11 @@ class ButtonBuynowGotoCart extends StatelessWidget {
                             );
                           } else {
                             ScaffoldMessenger.of(context).clearSnackBars();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                behavior: SnackBarBehavior.floating,
-                                margin: const EdgeInsets.only(
-                                  bottom: 80,
-                                  left: 20,
-                                  right: 20,
-                                ),
-                                content: Text('Please select size'),
-                              ),
+
+                            showThumbsUpDialog(
+                              context,
+                              'Please select size',
+                              isSuccess: false,
                             );
                           }
                         },

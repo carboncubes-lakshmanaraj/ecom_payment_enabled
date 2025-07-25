@@ -4,8 +4,12 @@ import 'package:ecom_payment/datas/product.dart'; // Make sure this import is co
 
 class TrendingProductsHorizontalListWithButtons extends StatefulWidget {
   final List<Product> products;
+  final String? selectedCurrency;
 
-  TrendingProductsHorizontalListWithButtons({required this.products});
+  TrendingProductsHorizontalListWithButtons({
+    required this.products,
+    required this.selectedCurrency,
+  });
 
   @override
   _TrendingProductsHorizontalListWithButtonsState createState() =>
@@ -69,7 +73,10 @@ class _TrendingProductsHorizontalListWithButtonsState
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => ProductDetailsPage(product: product),
+            builder: (_) => ProductDetailsPage(
+              product: product,
+              selectedCurrency: widget.selectedCurrency,
+            ),
           ),
         );
       },

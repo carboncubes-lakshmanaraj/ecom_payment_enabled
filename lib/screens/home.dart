@@ -1,4 +1,9 @@
+import 'package:ecom_payment/alertdialog/dialog_box_time.dart';
+import 'package:ecom_payment/currencyprovider/currency_provider.dart';
 import 'package:ecom_payment/datas/dummydata.dart';
+import 'package:ecom_payment/datas/product.dart';
+import 'package:ecom_payment/repositories/currencydao.dart';
+import 'package:ecom_payment/repositories/product.dart';
 import 'package:ecom_payment/widgetsforhome/sponseredcard.dart';
 import 'package:ecom_payment/widgetsforhome/glittercontainerheelsbanner.dart';
 import 'package:ecom_payment/widgetsforhome/newarrivalcard.dart';
@@ -12,6 +17,8 @@ import 'package:ecom_payment/widgetsforhome/carousel_products_off_disp.dart';
 import 'package:ecom_payment/widgetsforhome/category_round_nav_bar.dart';
 import 'package:ecom_payment/widgetsforhome/searchbar_with_aud.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:ecom_payment/cartprovider/cart_provider.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -21,6 +28,48 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  List<Product> products = [];
+  bool isLoading = true;
+
+  List<String> currencies = [];
+  String? selectedCurrency;
+
+  @override
+  void initState() {
+    super.initState();
+    loadCurrencies();
+    fetchProducts();
+  }
+
+  Future<void> loadCurrencies() async {
+    final result = await CurrencyDao.getAllCurrencies();
+
+    setState(() {
+      currencies = result;
+      selectedCurrency = result.isNotEmpty ? result.first : "INR";
+    });
+  }
+
+  Future<void> fetchProducts() async {
+    final result = await ProductDao.getAllProducts();
+
+    print("Fetched products from DB: ${result.length}");
+    for (var p in result) {
+      print("""
+-------------------
+Title: ${p.title}
+DealsOfTheDay: ${p.dealsOfTheDay}
+MRP: ${p.mrpPrice}
+% Off: ${p.percentageOff}
+Image: ${p.productImage}
+""");
+    }
+    setState(() {
+      products = result;
+      isLoading = false;
+    });
+  }
+
   final snackBar = SnackBar(
     behavior: SnackBarBehavior.floating,
     margin: EdgeInsets.only(
@@ -50,24 +99,72 @@ class _HomeState extends State<Home> {
           ),
         ),
         appBar: AppBar(
-          title: Image.asset(
-            'assets/splash.png', // Path to your PNG image
-            height: 40, // Adjust as needed
-          ),
-          centerTitle: true, // Optional: center the image
-          backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+          title: Row(
+            children: [
+              Image.asset('assets/splash.png', height: 40),
+              const SizedBox(width: 12),
+              if (currencies.isNotEmpty)
+                Expanded(
+                  child: Consumer<CartProvider>(
+                    builder: (context, cartProvider, child) {
+                      final cartNotEmpty = cartProvider.cart.isNotEmpty;
 
+                      return GestureDetector(
+                        onTap: () {
+                          if (cartNotEmpty) {
+                            showThumbsUpDialog(
+                              context,
+                              'Cannot change currency while cart has items.',
+                              isSuccess: false,
+                            );
+                          }
+                        },
+                        child: AbsorbPointer(
+                          absorbing: cartNotEmpty,
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: selectedCurrency,
+                              isExpanded: true,
+                              items: currencies.map((cur) {
+                                return DropdownMenuItem(
+                                  value: cur,
+                                  child: Text(
+                                    cur,
+                                    style: TextStyle(fontSize: 16),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(() {
+                                    selectedCurrency = value;
+                                  });
+                                  context.read<CurrencyProvider>().setCurrency(
+                                    value,
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+          centerTitle: false,
+          backgroundColor: Colors.white,
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 12.0),
               child: Material(
-                color: Colors.transparent, // This ensures splash effect works
+                color: Colors.transparent,
                 shape: const CircleBorder(),
                 child: InkWell(
                   customBorder: const CircleBorder(),
-                  splashColor: Colors.grey.withOpacity(
-                    0.3,
-                  ), // Optional: custom splash color
+                  splashColor: Colors.grey.withOpacity(0.3),
                   onTap: () {
                     ScaffoldMessenger.of(context)
                       ..hideCurrentSnackBar()
@@ -78,12 +175,11 @@ class _HomeState extends State<Home> {
                     height: 36,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors
-                          .white, // Background color (white or whatever you like)
+                      color: Colors.white,
                     ),
                     child: ClipOval(
                       child: Image.asset(
-                        'assets/pro_pic.png', // Make sure the image path is correct
+                        'assets/pro_pic.png',
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -111,7 +207,10 @@ class _HomeState extends State<Home> {
               SizedBox(height: 16),
               SizedBox(
                 height: 350, //  Set a fixed height for horizontal list!
-                child: HorizontalListWithButtons(products: dummyProducts),
+                child: HorizontalListWithButtons(
+                  products: products,
+                  selectedCurrency: selectedCurrency,
+                ),
               ),
               SizedBox(height: 16),
               NofuncBanner(),
@@ -121,12 +220,13 @@ class _HomeState extends State<Home> {
 
               TrendingProductbanner(),
               SizedBox(height: 16),
-              SizedBox(
-                height: 350, //  Set a fixed height for horizontal list!
-                child: TrendingProductsHorizontalListWithButtons(
-                  products: dummyProducts,
-                ),
-              ),
+              // SizedBox(
+              //   height: 350, //  Set a fixed height for horizontal list!
+              //   // child: TrendingProductsHorizontalListWithButtons(
+              //   //   selectedCurrency: selectedCurrency,
+              //   //   products: products,
+              //   // ),
+              // ),
               SizedBox(height: 16),
 
               NewArrivalsCard(),

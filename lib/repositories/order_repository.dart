@@ -1,41 +1,116 @@
 import 'package:ecom_payment/dbmanager/db.dart';
 import 'package:ecom_payment/datas/cartitem.dart';
-
+import 'package:ecom_payment/screens/cartpage.dart';
+import 'package:uuid/uuid.dart';
 class OrderRepository {
   /// Create a new order with cart items
   static Future<int> createOrder({
+    required String selectedcurrency,
     required String email,
     required List<CartItem> cartItems,
   }) async {
     final db = await DBManager.database;
 
-    double total = cartItems.fold(
-      0,
-      (sum, item) => sum + item.product.discountedPrice * 1,
-    );
+    double total = 0.0;
+
+    for (var item in cartItems) {
+      final discountedPrice = getDiscountedPrice(
+        item.product,
+        selectedcurrency,
+      );
+      total += discountedPrice;
+    }
 
     // Insert into Orders table
     int orderId = await db.insert("Orders", {
+      'CurrencyID': selectedcurrency,
       'Email': email,
       'TotalPrice': total,
       'OrderStatus': 'Pending',
-      'PaymentIntentID': null, // initialize as null
+      'PaymentIntentID': null,
     });
 
-    // Insert order items
     for (var item in cartItems) {
+      final discountedPrice = getDiscountedPrice(
+        item.product,
+        selectedcurrency,
+      );
+
       await db.insert("OrderItems", {
         'OrderID': orderId,
         'ProductTitle': item.product.title,
         'ProductImage': item.product.productImage,
         'SelectedSize': item.selectedSize,
-        'Quantity': 1,
-        'Price': item.product.discountedPrice,
+
+        'Price': discountedPrice,
       });
     }
 
     return orderId;
   }
+
+
+/// Generate and save a new idempotency key for this order
+static Future<String> generateAndSaveIdempotencyKey(int orderId) async {
+  final db = await DBManager.database;
+
+  final uuid = Uuid();
+  final newKey = "ord-$orderId-${uuid.v4()}";
+
+  await db.update(
+    'Orders',
+    {'IdempotencyKey': newKey},
+    where: 'OrderID = ?',
+    whereArgs: [orderId],
+  );
+
+  return newKey;
+}
+
+
+
+/// Retrieve existing idempotency key for an order, if any
+static Future<String?> getIdempotencyKey(int orderId) async {
+  final db = await DBManager.database;
+
+  final result = await db.query(
+    'Orders',
+    columns: ['IdempotencyKey'],
+    where: 'OrderID = ?',
+    whereArgs: [orderId],
+  );
+
+  if (result.isNotEmpty && result.first['IdempotencyKey'] != null) {
+    return result.first['IdempotencyKey'] as String;
+  }
+  return null;
+}
+
+
+
+/// Clear idempotency key after successful payment
+static Future<void> clearIdempotencyKey(int orderId) async {
+  final db = await DBManager.database;
+
+  await db.update(
+    'Orders',
+    {'IdempotencyKey': null},
+    where: 'OrderID = ?',
+    whereArgs: [orderId],
+  );
+}
+
+
+/// Ensure we have an idempotency key for the order.
+/// If none exists, generate and save one.
+static Future<String> ensureIdempotencyKey(int orderId) async {
+  final existingKey = await getIdempotencyKey(orderId);
+  if (existingKey != null && existingKey.isNotEmpty) {
+    return existingKey;
+  }
+  return await generateAndSaveIdempotencyKey(orderId);
+}
+
 
   /// Fetch order and items by orderId
   static Future<Map<String, dynamic>> getOrderWithItems(int orderId) async {

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ecom_payment/alertdialog/dialog_box_time.dart';
 import 'package:ecom_payment/datas/paymentlog.dart';
 import 'package:ecom_payment/dbmanager/db.dart';
 import 'package:ecom_payment/repositories/paymentlog_repo.dart';
@@ -34,6 +35,19 @@ class _OrderSummaryPageState extends State<OrderSummaryPage> {
     });
   }
 
+  String getCurrencySymbol(String? currencyId) {
+    switch (currencyId) {
+      case "INR":
+        return "₹";
+      case "USD":
+        return "\$";
+      case "GBP":
+        return "£";
+      default:
+        return "";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Map<String, dynamic>>(
@@ -47,7 +61,15 @@ class _OrderSummaryPageState extends State<OrderSummaryPage> {
 
         if (!snapshot.hasData || snapshot.data == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text("Order Summary")),
+            appBar: AppBar(
+              title: const Text("Order Summary"),
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ),
             body: const Center(
               child: Text("Order not found.", style: TextStyle(fontSize: 18)),
             ),
@@ -57,9 +79,19 @@ class _OrderSummaryPageState extends State<OrderSummaryPage> {
         final order = snapshot.data!['order'];
         final items = snapshot.data!['items'];
         double amount = order['TotalPrice'];
+        final currencyId = order['CurrencyID'];
+        final currencySymbol = getCurrencySymbol(currencyId);
 
         return Scaffold(
-          appBar: AppBar(title: Text("Order #${order['OrderID']}")),
+          appBar: AppBar(
+            title: Text("Order #${order['OrderID']}"),
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ),
           floatingActionButton: FloatingActionButton(
             onPressed: () async {
               final shouldRefresh = await Navigator.push(
@@ -82,10 +114,11 @@ class _OrderSummaryPageState extends State<OrderSummaryPage> {
                         children: [
                           Text("Email: ${order['Email']}"),
                           Text(
-                            "Total: ₹${order['TotalPrice'].toStringAsFixed(2)}",
+                            "Total: $currencySymbol${order['TotalPrice'].toStringAsFixed(2)}",
                           ),
                           Text("Order Date: ${order['OrderDate']}"),
                           Text("Status: ${order['OrderStatus']}"),
+                          Text("Currency: ${order['CurrencyID']}"),
                           const Divider(),
                           const Text(
                             "Items:",
@@ -104,7 +137,7 @@ class _OrderSummaryPageState extends State<OrderSummaryPage> {
                                   "Size: ${items[i]['SelectedSize']}",
                                 ),
                                 trailing: Text(
-                                  "₹${(items[i]['Price'] as num).toStringAsFixed(2)}",
+                                  " $currencySymbol${(items[i]['Price'] as num).toStringAsFixed(2)}",
                                 ),
                               ),
                             ),
@@ -137,13 +170,13 @@ class _OrderSummaryPageState extends State<OrderSummaryPage> {
                   onPressed: order['OrderStatus'] == 'Paid'
                       ? null
                       : () {
-                          _showPaymentOptionsDialog(amount);
+                          _showPaymentOptionsDialog(amount, currencyId);
                         },
 
                   child: Text(
                     order['OrderStatus'] == 'Paid'
                         ? "Already Paid"
-                        : "Pay Now ₹${order['TotalPrice'].toStringAsFixed(2)}",
+                        : "Pay Now  $currencySymbol${order['TotalPrice'].toStringAsFixed(2)}",
                     style: const TextStyle(fontSize: 18, color: Colors.white),
                   ),
                 ),
@@ -175,8 +208,11 @@ class _OrderSummaryPageState extends State<OrderSummaryPage> {
       await showPaymentSheet();
     } catch (e) {
       debugPrint("Stripe Init Error: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Payment failed to initialize.")),
+
+      showThumbsUpDialog(
+        context,
+        "Payment failed to initialize.",
+        isSuccess: false,
       );
     }
   }
@@ -206,9 +242,13 @@ class _OrderSummaryPageState extends State<OrderSummaryPage> {
         if (existingData['status'] == 'succeeded') {
           // Update local DB if needed
           await OrderRepository.updateOrderStatus(orderId, "Paid");
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Payment already completed.")),
+
+          showThumbsUpDialog(
+            context,
+            "Recovered: Payment already completed.",
+            isSuccess: true,
           );
+
           _refreshOrder();
           return null;
         } else {
@@ -226,11 +266,13 @@ class _OrderSummaryPageState extends State<OrderSummaryPage> {
             metadataCheck['id'],
           );
           await OrderRepository.updateOrderStatus(orderId, "Paid");
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Recovered: Payment already completed."),
-            ),
+
+          showThumbsUpDialog(
+            context,
+            "Recovered: Payment already completed.",
+            isSuccess: true,
           );
+
           _refreshOrder();
           return null;
         } else {
@@ -265,14 +307,16 @@ class _OrderSummaryPageState extends State<OrderSummaryPage> {
           createdAt: DateTime.now().toIso8601String(),
         ),
       );
-
+      final idempotencyKey = await OrderRepository.ensureIdempotencyKey(
+        orderId,
+      );
       final response = await http.post(
         Uri.parse("https://api.stripe.com/v1/payment_intents"),
         body: paymentinfo,
         headers: {
           "Authorization": "Bearer $secretkey",
           "Content-Type": "application/x-www-form-urlencoded",
-          "Idempotency-Key": "order-$orderId", // 💡 Prevents duplicates
+          "Idempotency-Key": idempotencyKey, // 💡 Prevents duplicates
         },
       );
 
@@ -308,13 +352,9 @@ class _OrderSummaryPageState extends State<OrderSummaryPage> {
       _refreshOrder();
       intentPaymentData = null;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Payment successful!")));
+      showThumbsUpDialog(context, "Payment successful!", isSuccess: true);
     } on StripeException {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Payment cancelled.")));
+      showThumbsUpDialog(context, "Payment cancelled.", isSuccess: false);
     } catch (e) {
       showDialog(
         context: context,
@@ -346,7 +386,7 @@ class _OrderSummaryPageState extends State<OrderSummaryPage> {
     return null;
   }
 
-  void _showPaymentOptionsDialog(double amount) {
+  void _showPaymentOptionsDialog(double amount, String currencyId) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -357,8 +397,8 @@ class _OrderSummaryPageState extends State<OrderSummaryPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Choose Payment Method',
+            Text(
+              'Pay ${getCurrencySymbol(currencyId)}${amount.toStringAsFixed(2)}',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
@@ -368,7 +408,7 @@ class _OrderSummaryPageState extends State<OrderSummaryPage> {
               onTap: () async {
                 Navigator.pop(context);
                 setState(() => _isLoading = true);
-                await paymentSheetInitialization(amount, "INR");
+                await paymentSheetInitialization(amount, currencyId);
                 setState(() => _isLoading = false);
               },
             ),

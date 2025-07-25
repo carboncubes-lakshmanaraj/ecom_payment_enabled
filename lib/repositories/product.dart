@@ -45,6 +45,7 @@ class ProductDao {
     for (var map in maps) {
       int productId = map['id'];
 
+      // Fetch product categories
       final catRows = await db.query(
         'product_categories',
         where: 'productId = ?',
@@ -54,6 +55,7 @@ class ProductDao {
           .map((row) => row['categoryId'] as int)
           .toList();
 
+      // Fetch additional images
       final imgRows = await db.query(
         'product_images',
         where: 'productId = ?',
@@ -63,8 +65,26 @@ class ProductDao {
           .map((row) => row['imagePath'] as String)
           .toList();
 
+      // ✅ Fetch product prices from product_price
+      final priceRows = await db.query(
+        'product_price',
+        where: 'productId = ?',
+        whereArgs: [productId],
+      );
+      Map<String, double> prices = {};
+      for (var priceRow in priceRows) {
+        final currencyId = priceRow['currencyId'] as String;
+        final unitPrice = (priceRow['unitPrice'] as num).toDouble();
+        prices[currencyId] = unitPrice;
+      }
+
       products.add(
-        Product.fromMap(map, categoryIds: categoryIds, images: images),
+        Product.fromMap(
+          map,
+          categoryIds: categoryIds,
+          images: images,
+          prices: prices,
+        ),
       );
     }
 
@@ -119,7 +139,6 @@ class ProductDao {
     await db.delete('products', where: 'id = ?', whereArgs: [productId]);
   }
 
-  /// Get Product by ID
   static Future<Product?> getProductById(int id) async {
     final db = await DBManager.database;
 
@@ -146,6 +165,24 @@ class ProductDao {
         .map((row) => row['imagePath'] as String)
         .toList();
 
-    return Product.fromMap(map, categoryIds: categoryIds, images: images);
+    // ✅ Fetch product prices from product_price
+    final priceRows = await db.query(
+      'product_price',
+      where: 'productId = ?',
+      whereArgs: [id],
+    );
+    Map<String, double> prices = {};
+    for (var priceRow in priceRows) {
+      final currencyId = priceRow['currencyId'] as String;
+      final unitPrice = (priceRow['unitPrice'] as num).toDouble();
+      prices[currencyId] = unitPrice;
+    }
+
+    return Product.fromMap(
+      map,
+      categoryIds: categoryIds,
+      images: images,
+      prices: prices,
+    );
   }
 }

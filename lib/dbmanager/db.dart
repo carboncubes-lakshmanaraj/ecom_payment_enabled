@@ -22,7 +22,7 @@ class DBManager {
 
     return await openDatabase(
       path,
-      version: 5, // 🔼 bump version for new tables
+      version: 8, // 🔼 bump version for new tables
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -35,7 +35,10 @@ class DBManager {
           OrderDate TEXT NOT NULL DEFAULT (datetime('now')),
           TotalPrice REAL NOT NULL,
           OrderStatus TEXT NOT NULL DEFAULT 'Pending',
-          PaymentIntentID TEXT
+          CurrencyID TEXT NOT NULL DEFAULT 'INR',
+          PaymentIntentID TEXT,
+            IdempotencyKey TEXT,
+           FOREIGN KEY (CurrencyID) REFERENCES currency(currencyId)
         )
       ''');
 
@@ -114,6 +117,26 @@ class DBManager {
             FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE
           );
         ''');
+
+        ///currency ...
+        ///
+        await db.execute('''
+  CREATE TABLE IF NOT EXISTS currency (
+    currencyId TEXT PRIMARY KEY
+  );
+''');
+
+        await db.execute('''
+  CREATE TABLE IF NOT EXISTS product_price (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    productId INTEGER NOT NULL,
+    currencyId TEXT NOT NULL,
+    unitPrice REAL NOT NULL,
+    UNIQUE (productId, currencyId),
+    FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (currencyId) REFERENCES currency(currencyId) ON DELETE CASCADE
+  );
+''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -188,6 +211,33 @@ class DBManager {
               FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE
             );
           ''');
+        }
+        if (oldVersion < 6) {
+          await db.execute('''
+    CREATE TABLE IF NOT EXISTS currency (
+      currencyId TEXT PRIMARY KEY
+    );
+  ''');
+
+          await db.execute('''
+    CREATE TABLE IF NOT EXISTS product_price (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      productId INTEGER NOT NULL,
+      currencyId TEXT NOT NULL,
+      unitPrice REAL NOT NULL,
+      UNIQUE (productId, currencyId),
+      FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE,
+      FOREIGN KEY (currencyId) REFERENCES currency(currencyId) ON DELETE CASCADE
+    );
+  ''');
+        }
+        if (oldVersion < 7) {
+          await db.execute(
+            "ALTER TABLE Orders ADD COLUMN CurrencyID TEXT NOT NULL DEFAULT 'INR'",
+          );
+        }
+        if (oldVersion < 8) {
+          await db.execute("ALTER TABLE Orders ADD COLUMN IdempotencyKey TEXT");
         }
       },
     );

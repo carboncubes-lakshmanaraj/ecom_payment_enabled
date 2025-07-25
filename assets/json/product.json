@@ -10,6 +10,11 @@
                 1,
                 2
             ],
+            "prices": {
+                "INR": 2499,
+                "USD": 29.99,
+                "GBP": 24.99
+            },
             "subCategoryId": 2,
             "dealsOfTheDay": true,
             "trendingProducts": false,
@@ -31,6 +36,11 @@
             "categoryIds": [
                 3
             ],
+            "prices": {
+                "INR": 4999,
+                "USD": 59.99,
+                "GBP": 49.99
+            },
             "dealsOfTheDay": true,
             "trendingProducts": false,
             "additionalImages": [
@@ -59,7 +69,12 @@
                 "assets/procars/watches/three.jpg",
                 "assets/procars/watches/four.jpg"
             ],
-            "productImage": "assets/products/watch.png"
+            "productImage": "assets/products/watch.png",
+            "prices": {
+                "INR": 1599,
+                "USD": 19.99,
+                "GBP": 16.99
+            }
         }
     ]
 }
